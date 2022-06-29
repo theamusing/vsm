@@ -15,6 +15,12 @@ uniform vec3 lightPos;
 uniform vec3 viewPos;
 
 uniform float c_power;
+
+float map_01(float x, float v0, float v1)
+{
+    return (x - v0) / (v1 - v0);
+}
+
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
 
@@ -28,22 +34,30 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     vec3 normal = normalize(fs_in.Normal);
     vec3 lightDir = normalize(lightPos - fs_in.FragPos);
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    currentDepth-=bias;
+    currentDepth=2.0f*currentDepth-1.0f;
     //float currentDepth_second=exp(c_power*currentDepth);
     //currentDepth_second=currentDepth;
     currentDepth=exp(-c_power*currentDepth);
 
     //EVSM  
+    /*
     float mean = texture(shadowMap, projCoords.xy).r;
     float variance = texture(shadowMap, projCoords.xy).g;
     float mean_second=texture(shadowMap, projCoords.xy).b;
     float variance_second=texture(shadowMap, projCoords.xy).a;
     variance-=mean*mean;
     variance_second-=mean_second*mean_second;
+    */
+    float x1=texture(shadowMap, projCoords.xy).x;
+    float x2=texture(shadowMap, projCoords.xy).y;
+    float x3=texture(shadowMap, projCoords.xy).z;
+    float x4=texture(shadowMap, projCoords.xy).w;
     float shadow=0.0;
-    return mean;
-    if(mean*currentDepth<1)
+
+    shadow=x1*currentDepth;
+    if (shadow>1.0f)
         shadow=1.0f;
+
     //float shadow1 = 1-variance/(variance+(currentDepth-mean)*(currentDepth -mean));
     //float shadow2=1-variance_second/(variance_second+(currentDepth_second-mean_second)*(currentDepth_second -mean_second));
     
@@ -74,9 +88,9 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
     if(projCoords.z > 1.0)
-        shadow = 0.0;
+        shadow = 1.0;
         
-    return shadow;
+    return 1.0-shadow;
 }
 
 void main()
