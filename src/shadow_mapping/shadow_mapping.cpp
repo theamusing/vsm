@@ -39,6 +39,8 @@ float lastFrame = 0.0f;
 // meshes
 unsigned int planeVAO;
 
+//c_power 
+float c_power = 0.05f;
 int main()
 {
     // glfw: initialize and configure
@@ -221,36 +223,37 @@ int main()
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, woodTexture);
             //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, depthMap, 0);
+            simpleDepthShader.setFloat("c_power", c_power);
             renderScene(simpleDepthShader,mymodel);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        //1.5 blur the shadowmap
-        //on x_direction
-        
-        blur.use();
-        blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        blur.setInt("type", 0);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, blurfbo);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, blurmap, 0);
-        renderScene(blur, mymodel);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        //on y_direction
-        blur.use();
-        blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        blur.setInt("type", 1);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, blurmap);
-        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, depthMap, 0);
-        renderScene(blur, mymodel);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        ////1.5 blur the shadowmap
+        ////on x_direction
+        //
+        //blur.use();
+        //blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        //blur.setInt("type", 0);
+        //glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        //glBindFramebuffer(GL_FRAMEBUFFER, blurfbo);
+        //glClear(GL_DEPTH_BUFFER_BIT);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, depthMap);
+        ////glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, blurmap, 0);
+        //renderScene(blur, mymodel);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //
+        ////on y_direction
+        //blur.use();
+        //blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        //blur.setInt("type", 1);
+        //glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        //glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        //glClear(GL_DEPTH_BUFFER_BIT);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, blurmap);
+        ////glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, depthMap, 0);
+        //renderScene(blur, mymodel);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
 
         // reset viewport
@@ -271,6 +274,8 @@ int main()
         shader.setVec3("viewPos", camera.Position);
         shader.setVec3("lightPos", lightPos);
         shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        //set c_power
+        shader.setFloat("c_power", c_power);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
         glActiveTexture(GL_TEXTURE1);
@@ -279,11 +284,11 @@ int main()
 
         // render Depth map to quad for visual debugging
         // ---------------------------------------------
-        debugDepthQuad.use();
-        debugDepthQuad.setFloat("near_plane", near_plane);
-        debugDepthQuad.setFloat("far_plane", far_plane);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        //debugDepthQuad.use();
+        //debugDepthQuad.setFloat("near_plane", near_plane);
+        //debugDepthQuad.setFloat("far_plane", far_plane);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, depthMap);
         //renderQuad();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -360,7 +365,7 @@ void renderScene(Shader &shader,Model& mymodel)
     //render model
 
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
+    model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::scale(model, glm::vec3(0.02));
     shader.setMat4("model", model);
     mymodel.Draw(shader);
