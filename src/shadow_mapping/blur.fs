@@ -12,6 +12,8 @@ void main()
     //gl_FragDepth = gl_FragCoord.z;
     float mean=0;
     float variance=0;
+    float mean_second=0;
+    float variance_second=0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
     // perform perspective divide
     vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
@@ -21,28 +23,29 @@ void main()
     {
         for(int i=-range;i<=range;i++)
         {
-            float x = texture(shadowMap,projCoords.xy+i*vec2(1,0)*texelSize).r;
-
-            float y = texture(shadowMap,projCoords.xy+i*vec2(1,0)*texelSize).g;
-            float d = y-x*x;
-            mean+=x;
-            variance+=y;
-            //variance+=x*x;
+            mean+=texture(shadowMap,projCoords.xy+i*vec2(1,0)*texelSize).x;
+            variance+=mean*mean;
+            mean_second+=texture(shadowMap,projCoords.xy+i*vec2(1,0)*texelSize).y;
+            variance_second+=mean_second*mean_second;
         }
         mean/=float(2*range+1);
         variance/=float(2*range+1);
+        mean_second/=float(2*range+1);
+        variance_second/=float(2*range+1);
     }
     else//y_direction
     {
         for(int i=-range;i<=range;i++)
         {
-            float x = texture(shadowMap,projCoords.xy+i*vec2(0,1)*texelSize).r;
-            mean+=x;
-            variance+=texture(shadowMap,projCoords.xy+i*vec2(0,1)*texelSize).g;
+            mean+=texture(shadowMap,projCoords.xy+i*vec2(0,1)*texelSize).x;
+            variance+=texture(shadowMap,projCoords.xy+i*vec2(0,1)*texelSize).y;
+            mean_second+=texture(shadowMap,projCoords.xy+i*vec2(0,1)*texelSize).z;
+            variance_second+=texture(shadowMap,projCoords.xy+i*vec2(0,1)*texelSize).w;
         }
         mean/=float(2*range+1);
         variance/=float(2*range+1);
+        mean_second/=float(2*range+1);
+        variance_second/=float(2*range+1);
     }
-    FragColor = vec4(mean,variance,0,0);
-    //FragColor = vec4(0.5,0.25,0,0);
+    FragColor = vec4(mean,variance,mean_second,variance_second);
 }

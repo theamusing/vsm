@@ -23,8 +23,8 @@ void renderCube();
 void renderQuad();
 void genTexture(GLuint& texture, GLuint& fbo,unsigned int num);
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1080;
+const unsigned int SCR_HEIGHT = 768;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -39,6 +39,10 @@ float lastFrame = 0.0f;
 // meshes
 unsigned int planeVAO;
 
+//c_power 
+float pos_power =5.0f;
+float neg_power = 10.0f;
+float amout = 3.0f;
 int main()
 {
     // glfw: initialize and configure
@@ -80,7 +84,6 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-    //string path = "D:/Users/nbyqy/source/repos/vsm/src/shadow_mapping";
     // build and compile shaders
     // -------------------------
     Shader shader("shadow_mapping.vs", "shadow_mapping.fs");
@@ -132,37 +135,7 @@ int main()
     unsigned int blurfbo, blurmap;
     genTexture(blurmap, blurfbo,0);
 
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-    /*
-    unsigned int depthMapFBO;
-    glGenFramebuffers(1, &depthMapFBO);
-    // create depth texture
-    unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 , GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(depthMapFBO);
-    glReadBuffer(depthMapFBO);
-    //glDrawBuffer(GL_NONE);
-    //glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    */
-
-
+    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
     // shader configuration
     // --------------------
@@ -193,9 +166,9 @@ int main()
         processInput(window);
 
         // change light position over time
-        //lightPos.x = sin(glfwGetTime()) * 3.0f;
-        //lightPos.z = cos(glfwGetTime()) * 2.0f;
-        //lightPos.y = 5.0 + cos(glfwGetTime()) * 1.0f;
+        lightPos.x = sin(glfwGetTime()) * 3.0f;
+        lightPos.z = cos(glfwGetTime()) * 2.0f;
+        lightPos.y = 5.0 + cos(glfwGetTime()) * 1.0f;
 
         // render
         // ------
@@ -220,37 +193,39 @@ int main()
             glClear(GL_DEPTH_BUFFER_BIT);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, woodTexture);
-            //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, depthMap, 0);
+            simpleDepthShader.setFloat("pos_power", pos_power);
+            simpleDepthShader.setFloat("neg_power", neg_power);
+            simpleDepthShader.setFloat("amout", amout);
             renderScene(simpleDepthShader,mymodel);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //1.5 blur the shadowmap
         //on x_direction
         
-        blur.use();
-        blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        blur.setInt("type", 0);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, blurfbo);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, blurmap, 0);
-        renderScene(blur, mymodel);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        //on y_direction
-        blur.use();
-        blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        blur.setInt("type", 1);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, blurmap);
-        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, depthMap, 0);
-        renderScene(blur, mymodel);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //blur.use();
+        //blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        //blur.setInt("type", 0);
+        //glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        //glBindFramebuffer(GL_FRAMEBUFFER, blurfbo);
+        //glClear(GL_DEPTH_BUFFER_BIT);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, depthMap);
+        ////glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, blurmap, 0);
+        //renderScene(blur, mymodel);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //
+        ////on y_direction
+        //blur.use();
+        //blur.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        //blur.setInt("type", 1);
+        //glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        //glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        //glClear(GL_DEPTH_BUFFER_BIT);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, blurmap);
+        ////glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, depthMap, 0);
+        //renderScene(blur, mymodel);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
 
         // reset viewport
@@ -271,6 +246,10 @@ int main()
         shader.setVec3("viewPos", camera.Position);
         shader.setVec3("lightPos", lightPos);
         shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        //set c_power
+        shader.setFloat("pos_power", pos_power);
+        shader.setFloat("neg_power", neg_power);
+        shader.setFloat("amout", amout);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
         glActiveTexture(GL_TEXTURE1);
@@ -279,11 +258,11 @@ int main()
 
         // render Depth map to quad for visual debugging
         // ---------------------------------------------
-        debugDepthQuad.use();
-        debugDepthQuad.setFloat("near_plane", near_plane);
-        debugDepthQuad.setFloat("far_plane", far_plane);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        //debugDepthQuad.use();
+        //debugDepthQuad.setFloat("near_plane", near_plane);
+        //debugDepthQuad.setFloat("far_plane", far_plane);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, depthMap);
         //renderQuad();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -304,24 +283,24 @@ int main()
 
 void genTexture(GLuint& texture,GLuint& fbo,unsigned int num)
 {
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
     glGenFramebuffers(1, &fbo);
     // create depth texture
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+num, GL_TEXTURE_2D, texture, 0);
     glDrawBuffer(fbo);
     glReadBuffer(fbo);
@@ -360,8 +339,8 @@ void renderScene(Shader &shader,Model& mymodel)
     //render model
 
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
-    model = glm::scale(model, glm::vec3(0.02));
+    model = glm::translate(model, glm::vec3(12.0f, 0.8f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.02f));
     shader.setMat4("model", model);
     mymodel.Draw(shader);
 

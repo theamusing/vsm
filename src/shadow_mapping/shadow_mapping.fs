@@ -14,6 +14,36 @@ uniform sampler2D shadowMap;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
+uniform float pos_power;
+uniform float neg_power;
+uniform float amout;
+vec2 warpDepth(float depth)
+{
+    depth = 2.0f * depth - 1.0f;
+    float pos = exp(pos_power * depth);
+    float neg = -exp(-neg_power * depth);
+    vec2 wDepth = vec2(pos, neg);
+    return wDepth;
+}
+
+float Chebyshev(vec2 moments, float mean, float minVariance)
+{
+    float shadow = 1.0f;
+    if(mean <= moments.x)
+    {
+        shadow = 1.0f;
+        return shadow;
+    }
+    else
+    {
+        float variance = moments.y - (moments.x * moments.x);
+        variance = max(variance, minVariance);
+        float d = mean - moments.x;
+        shadow = variance / (variance + (d * d));
+        return shadow;
+    }
+}
+
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
 
@@ -29,24 +59,29 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     vec3 normal = normalize(fs_in.Normal);
     vec3 lightDir = normalize(lightPos - fs_in.FragPos);
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-
-    //trivial
-    //float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
-
-    //VSM  
+    vec2 wDepth = warpDepth(currentDepth-bias);
+    //EVSM  
+    vec4 moments = texture(shadowMap, projCoords.xy).xyzw;
     
-    float mean = texture(shadowMap, projCoords.xy).r;
-    float variance = texture(shadowMap, projCoords.xy).g;
-    variance-=mean*mean;
-
-    if(currentDepth - bias-mean<0)
+    vec2 posMoments = vec2(moments.x*amout, moments.y*amout*amout);
+    vec2 negMoments = vec2(-moments.z*amout, moments.w*amout*amout);
+    vec2 depthScale = 0.0001f * vec2(pos_power, neg_power) * wDepth;
+    vec2 minVariance = depthScale * depthScale;
+    float posResult = Chebyshev(posMoments, wDepth.x, minVariance.x);
+    float negResult = Chebyshev(negMoments, wDepth.y, minVariance.y);
+    float shadow = min(posResult, negResult);
+    
+    /*
+    //reflect to [Minshadow,1]
+    const float Minshadow=0.1;
+    if (shadow<Minshadow)
         return 0;
-    float shadow = 1-variance/(variance+(currentDepth - bias-mean)*(currentDepth - bias-mean));
-    
-    
+    shadow=Minshadow+(1-Minshadow)*shadow;
+    */
+
     //PCF
     /*
-    float shadow = 0.0;
+    //float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
     for(int x = -1; x <= 1; ++x)
     {
@@ -59,18 +94,19 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     shadow /= 9.0;
     */
+
     // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
     if(projCoords.z > 1.0)
-        shadow = 0.0;
+        shadow = 1.0;
         
-    return shadow;
+    return 1.0-shadow;
 }
 
 void main()
 {           
     vec3 color = texture(diffuseTexture, fs_in.TexCoords).rgb;
     vec3 normal = normalize(fs_in.Normal);
-    vec3 lightColor = vec3(0.3);
+    vec3 lightColor = vec3(1);
     // ambient
     vec3 ambient = 0.3 * lightColor;
     // diffuse
@@ -89,4 +125,5 @@ void main()
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;    
     
     FragColor = vec4(lighting, 1.0);
+    //FragColor = vec4(shadow);
 }
